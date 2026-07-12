@@ -18,9 +18,13 @@
 
 ## Структура
 01_micrograd/
+
 ├── eng.py     # Value, backward, топосортировка
+
 ├── nn.py         # Neuron, Layer, MLP
+
 ├── study.py    # обучение на задаче "точка внутри круга"
+
 └── README.md
 
 ## Ключевые выводы
