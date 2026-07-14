@@ -55,7 +55,8 @@ class MLPNameGenModel(nn.Module):
         )
 
         self.C = nn.Parameter(torch.randn(self.vocab_size, embed_dim))
-        self.linear1 = nn.Linear(block_size * embed_dim, hidden_dim)
+        self.linear1 = nn.Linear(block_size * embed_dim, hidden_dim, bias=False)
+        self.bn1 = nn.BatchNorm1d(hidden_dim)
         self.linear2 = nn.Linear(hidden_dim, self.vocab_size)
 
         self.train_losses: list[float] = []
@@ -98,10 +99,11 @@ class MLPNameGenModel(nn.Module):
         return X_train, Y_train, X_val, Y_val, X_test, Y_test
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        emb = self.C[x]                         # (batch, block_size, embed_dim)
-        emb = emb.view(emb.shape[0], -1)         # (batch, block_size*embed_dim)
-        h = torch.tanh(self.linear1(emb))        # (batch, hidden_dim)
-        logits = self.linear2(h)                 # (batch, vocab_size)
+        emb = self.C[x]                          # (batch, block_size, embed_dim)
+        emb = emb.view(emb.shape[0], -1)          # (batch, block_size*embed_dim)
+        pre = self.bn1(self.linear1(emb))         # linear -> BatchNorm (нормализуем ДО активации)
+        h = torch.tanh(pre)                       # (batch, hidden_dim)
+        logits = self.linear2(h)                  # (batch, vocab_size)
         return logits
 
     def train_model(self, epochs: int = 100, lr: float = 0.001, verbose: bool = True):
@@ -172,6 +174,7 @@ class MLPNameGenModel(nn.Module):
         plt.legend()
         plt.title('Training and validation loss')
         plt.show()
+
 
 m = MLPNameGenModel(file_path="names_table.jsonl")
 m.train_model()

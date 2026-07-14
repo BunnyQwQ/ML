@@ -1,12 +1,13 @@
-# Makemore Part 2 — MLP Language Model with Embeddings
+# Makemore Part 2-3 — MLP Language Model with Embeddings & BatchNorm
 
-Символьная языковая модель на основе многослойного перцептрона (MLP), с обучаемыми embeddings и расширенным контекстом. Реализация по мотивам [Karpathy's makemore Part 2](https://github.com/karpathy/makemore), развитие идеи из bigram-модели (`02_makemore_bigram/`) — вместо одного предыдущего символа модель использует контекст из нескольких символов.
+Символьная языковая модель на основе многослойного перцептрона (MLP), с обучаемыми embeddings, расширенным контекстом и batch-нормализацией. Реализация по мотивам [Karpathy's makemore Part 2-3](https://github.com/karpathy/makemore), развитие идеи из bigram-модели (`02_makemore_bigram/`) — вместо одного предыдущего символа модель использует контекст из нескольких символов.
 
 ## Архитектура
-context (block_size symbols) → embedding lookup → flatten → Linear → tanh → Linear → logits
+context (block_size symbols) → embedding lookup → flatten → Linear → BatchNorm → tanh → Linear → logits
 
 - **Embedding table (`C`)** — обучаемая матрица `(vocab_size, embed_dim)`, каждому символу сопоставлен плотный вектор вместо one-hot представления
 - **Контекст** — `block_size` предыдущих символов вместо одного (расширение по сравнению с bigram-моделью)
+- **BatchNorm** — нормализация пре-активаций перед `tanh`, стабилизирует обучение
 - **Скрытый слой** — `nn.Linear` + `tanh`, первая настоящая нелинейность в спринте
 - **Выходной слой** — `nn.Linear` → логиты по словарю символов
 
@@ -14,29 +15,33 @@ context (block_size symbols) → embedding lookup → flatten → Linear → tan
 
 - `NamesDataset` + `DataLoader` — стандартный PyTorch pipeline вместо ручного сэмплинга батчей
 - **Train/val/test split** — с валидацией входных долей (`val_frac`, `test_frac`)
+- **BatchNorm1d** между линейным слоем и активацией; `bias=False` в предыдущем `Linear`, так как BatchNorm делает его избыточным
 - Обучение через `torch.optim.Adam`, `F.cross_entropy` как функция потерь
 - Метрики на train и val логируются по эпохам, визуализируются через `plot_losses()`
 - Генерация новых имён через сэмплирование (`torch.multinomial`) по обученному распределению
 
 ## Результаты
 
-- **Test loss: 2.232**
+- **Test loss: 2.193** (с BatchNorm) против **2.232** (без BatchNorm) — улучшение при прочих равных
 - При первом запуске (`hidden_dim=200`) обнаружен overfitting — val loss начинал расти после нескольких эпох стабильного падения train loss
 - Диагностирована причина: избыточная мощность модели относительно размера датасета
-- **Уменьшение размера скрытого слоя устранило overfitting** — train и val loss сходятся стабильно, без серьезного расхождения
-
+- Уменьшение размера скрытого слоя устранило overfitting — train и val loss сходятся стабильно
+- Добавление BatchNorm ускорило сходимость (loss падает быстрее в первые эпохи) и дало небольшое улучшение финального test loss
 ## Ключевые выводы
 
 - Embeddings обучаются через обычный backprop: градиент, приходящий к `C[x]`, кладётся обратно в соответствующие строки `C`, суммируясь при повторном использовании одного символа в батче
 - One-hot + `nn.Linear` эквивалентно прямому индексированию embedding-таблицы, но менее эффективно по памяти и вычислениям при большом словаре
 - Batch-обучение через `DataLoader(shuffle=True)` даёт честный проход по всем примерам за эпоху, в отличие от ручного сэмплирования с повторами
 - Test-выборка используется один раз, в самом конце — если использовать её многократно в процессе экспериментов, она фактически превращается во второй val, и итоговая оценка перестаёт быть честной
-- **Размер модели относительно объёма данных — практический рычаг против overfitting**: избыточное число параметров даёт модели возможность заучивать train-данные вместо обобщения; уменьшение `hidden_dim` — простейший и в данном случае достаточный способ борьбы с этим, до того как понадобятся regularization-техники (weight decay, dropout)
+- Размер модели относительно объёма данных — практический рычаг против overfitting: избыточное число параметров даёт модели возможность заучивать train-данные вместо обобщения
+- **BatchNorm нормализует пре-активации, не давая им уходить в зону насыщения `tanh` (где производная ≈ 0 и градиент не проходит)** — это делает обучение быстрее и стабильнее, снижает зависимость от точной инициализации весов
+- **BatchNorm делает разницу `model.train()` / `model.eval()` практически критичной**: в train используется статистика текущего батча, в eval — накопленные running mean/var (через EMA). Забыть переключить режим — источник тихих багов
+- `bias` в линейном слое перед BatchNorm избыточен: BatchNorm вычитает среднее, любой постоянный сдвиг сокращается, его роль берёт обучаемый `beta`
 
 ## Структура
 03_makemore_mlp/
 
-├── mlp_model_gen_model.py    # NamesDataset, MLPNameGenModel
+├── mlp_model.py    # NamesDataset, MLPNameGenModel (с BatchNorm)
 
 ├── demo.ipynb      # обучение, графики loss, генерация примеров, сравнение с bigram-моделью
 
@@ -47,8 +52,8 @@ context (block_size symbols) → embedding lookup → flatten → Linear → tan
 ## Пример использования
 
 ```python
-model = MLPNameGenModel("names_table.jsonl", block_size=3, embed_dim=10, hidden_dim=100, epochs=100)
-model.train_model(lr=0.001)
+model = MLPNameGenModel("names_table.jsonl", block_size=3, embed_dim=10, hidden_dim=100, batch_size=32)
+model.train_model(epochs=100, lr=0.001)
 model.plot_losses()
 
 print(model.generate(10))
