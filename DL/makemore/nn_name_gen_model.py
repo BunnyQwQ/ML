@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import pandas as pd
 import matplotlib.pyplot as plt
+from pathlib import Path
 
 
 class BigramNNModel(nn.Module):
@@ -97,7 +98,7 @@ class BigramNNModel(nn.Module):
             plt.show()
 
 
-net = BigramNNModel("names_table.jsonl", seed=30)
+net = BigramNNModel(Path(__file__).resolve().parent.parent / "data" / "names_table.jsonl", seed=30)
 net.train_model(epochs=500, lr=10.0)
 
 print(net.generate(10))

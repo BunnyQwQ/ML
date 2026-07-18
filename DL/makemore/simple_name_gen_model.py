@@ -2,6 +2,7 @@ import torch
 import pandas as pd
 import matplotlib.pyplot as plt
 from torch.nn.functional import nll_loss
+from pathlib import Path
 
 
 class NameGenModel:
@@ -71,7 +72,7 @@ class NameGenModel:
         return nll.item()
 
 
-s = NameGenModel("names_table.jsonl",seed=30)
+s = NameGenModel(Path(__file__).resolve().parent.parent / "data" / "names_table.jsonl", seed=30)
 s.show()
 print(s.generate(10))
 print(s.nll_loss())

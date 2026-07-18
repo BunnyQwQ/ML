@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 import pandas as pd
 import matplotlib.pyplot as plt
+from pathlib import Path
 
 
 class NamesDataset(Dataset):
@@ -176,7 +177,7 @@ class MLPNameGenModel(nn.Module):
         plt.show()
 
 
-m = MLPNameGenModel(file_path="names_table.jsonl")
+m = MLPNameGenModel(file_path=Path(__file__).resolve().parent.parent / "data" / "names_table.jsonl")
 m.train_model()
 m.plot_losses()
 print(m.test_loss())

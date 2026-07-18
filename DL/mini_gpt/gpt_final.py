@@ -4,6 +4,7 @@ import torch.nn.functional as F
 import pandas as pd
 import matplotlib.pyplot as plt
 from torch.utils.data import Dataset, DataLoader
+from pathlib import Path
 
 
 class Head(nn.Module):
@@ -308,7 +309,7 @@ class GPTFinal(nn.Module):
 
 
 if __name__ == '__main__':
-    m = GPTFinal(file_path="names_table.jsonl")
+    m = GPTFinal(file_path=Path(__file__).resolve().parent.parent / "data" / "names_table.jsonl")
     m.train_model()
     m.plot_losses()
     print("test loss:", m.test_loss())

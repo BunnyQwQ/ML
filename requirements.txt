@@ -1,0 +1,16 @@
+# Ядро (classic_ml/, часть DL/)
+numpy
+scikit-learn
+pandas
+matplotlib
+
+# Deep learning (DL/)
+torch
+torchvision
+
+# Работа с ноутбуками
+jupyter
+
+# Опциональные, тяжёлые зависимости отдельных проектов:
+#   tensorflow, trimesh  ->  3d_pointcloud/ (классификация облаков точек)
+#   fasttext             ->  KaggleNotebooks/nlp_content_moderation

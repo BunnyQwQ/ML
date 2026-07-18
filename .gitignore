@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+
+# Datasets downloaded at runtime (CIFAR-10 и т.п.)
+DL/res_net/data/
+*.tar.gz
+
+# OS
+.DS_Store
+Thumbs.db
