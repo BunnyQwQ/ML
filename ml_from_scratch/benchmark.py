@@ -1,5 +1,5 @@
 """
-Бенчмарк самописных моделей из classic_ml/models.
+Бенчмарк самописных моделей из ml_from_scratch/models.
 
 Скрипт по очереди обучает каждую модель на одном и том же датасете
 и печатает её метрики. Отдельный датасет для классификации, отдельный —
@@ -9,7 +9,7 @@
 (из папки models/). sklearn тут только как источник данных и «линейка».
 
 Запуск (нужен интерпретатор с numpy + sklearn):
-    python classic_ml/benchmark.py
+    python ml_from_scratch/benchmark.py
 """
 
 import importlib.util

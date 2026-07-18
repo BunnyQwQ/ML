@@ -21,11 +21,24 @@ micrograd  →  makemore  →  mlp  →  mini-GPT
 | [mini-GPT](DL/mini_gpt/) | Decoder-only трансформер: self-attention, multi-head, позиционные эмбеддинги — вручную | GPT-архитектура без `nn.Transformer` |
 | [res_net](DL/res_net/) | ResNet-18 с нуля для CIFAR-10: residual-блоки, аугментации, cosine LR, early stopping | Test accuracy **93.99%** |
 
+## 🎮 Reinforcement Learning
+
+Обучение с подкреплением — от табличных методов до deep RL. См. индекс: [RL/](RL/)
+
+_Раздел в активной разработке._
+
+## 🤖 LLM
+
+Прикладная работа с большими языковыми моделями (fine-tuning, RAG, агенты) —
+развитие темы из `mini_gpt`. См. индекс: [LLM/](LLM/)
+
+_Раздел в активной разработке._
+
 ## 📊 Classic ML с нуля
 
 | Проект | Что внутри |
 |--------|-----------|
-| [classic_ml](classic_ml/) | 7 классических моделей на чистом NumPy (linear/softmax regression, KNN, decision tree, random forest, SVM, gradient boosting) + [бенчмарк](classic_ml/benchmark.py), сравнивающий их метрики и время обучения на едином датасете |
+| [ml_from_scratch](ml_from_scratch/) | 7 классических моделей на чистом NumPy (linear/softmax regression, KNN, decision tree, random forest, SVM, gradient boosting) + [бенчмарк](ml_from_scratch/benchmark.py), сравнивающий их метрики и время обучения на едином датасете |
 
 ## 📓 Прикладные проекты
 
@@ -49,7 +62,7 @@ micrograd  →  makemore  →  mlp  →  mini-GPT
 pip install -r requirements.txt
 
 # пример: бенчмарк классических моделей
-python classic_ml/benchmark.py
+python ml_from_scratch/benchmark.py
 
 # пример: обучение ResNet-18 на CIFAR-10
 python DL/res_net/res_net18.py
