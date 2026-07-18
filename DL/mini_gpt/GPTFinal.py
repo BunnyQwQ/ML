@@ -13,7 +13,7 @@ class Head(nn.Module):
         self.key = nn.Linear(C, head_size, bias=False)
         self.value = nn.Linear(C, head_size, bias=False)
         self.head_size = head_size
-        self.dropout = nn.Dropout(dropout)  # NEW: dropout на веса внимания (регуляризация)
+        self.dropout = nn.Dropout(dropout)
         self.register_buffer('tril', torch.tril(torch.ones(block_size, block_size)))
 
     def forward(self, x):
@@ -64,7 +64,7 @@ class FeedForward(nn.Module):
 
 
 class Block(nn.Module):
-    def __init__(self, C: int, num_heads: int, block_size: int, dropout: float = 0.1):  # FIXED: hum_heads -> num_heads
+    def __init__(self, C: int, num_heads: int, block_size: int, dropout: float = 0.1):
         super().__init__()
         self.attention = MultiHeadAttention(C, num_heads, block_size, dropout)
         self.ff = FeedForward(C, dropout)
@@ -92,6 +92,15 @@ class GPT(nn.Module):
         self.block_size = block_size
 
         self.lmf.weight = self.token_embeddings.weight
+        self.apply(self._init_weights)
+
+    def _init_weights(self, module):
+        if isinstance(module, nn.Linear):
+            nn.init.normal_(module.weight, mean=0.0, std=0.02)
+            if module.bias is not None:
+                nn.init.zeros_(module.bias)
+        elif isinstance(module, nn.Embedding):
+            nn.init.normal_(module.weight, mean=0.0, std=0.02)
 
     def forward(self, idx: torch.Tensor):
         B, T = idx.shape
@@ -123,7 +132,7 @@ class GPTFinal(nn.Module):
         block_size: int = 16,
         embed_dim: int = 64,
         batch_size: int = 32,
-        seed: int = 42,
+        seed: int = 666,
         val_frac: float = 0.1,
         test_frac: float = 0.1,
         num_heads: int = 4,
@@ -206,13 +215,10 @@ class GPTFinal(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.gpt(x)
 
-    # CHANGED: AdamW + weight_decay + grad clip + early stopping + loss по всем позициям
-    def train_model(self, epochs: int = 50, lr: float = 3e-4,  # CHANGED: lr 1e-3 -> 3e-4
-                    weight_decay: float = 0.01, patience: int = 5, verbose: bool = True):
-        # CHANGED: Adam -> AdamW (правильный weight decay для трансформеров)
+    def train_model(self, epochs: int = 200, lr: float = 3e-4, weight_decay: float = 0.01, patience: int = 5, verbose: bool = True):
         optimizer = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
 
-        best_val = float('inf')          # NEW: early stopping
+        best_val = float('inf')
         best_state = None
         patience_counter = 0
 
@@ -222,14 +228,13 @@ class GPTFinal(nn.Module):
             n_batches = 0
 
             for xb, yb in self.train_loader:
-                logits = self.forward(xb)             # (B, T, vocab)
+                logits = self.forward(xb) # (B, T, vocab)
                 B, T, V = logits.shape
-                # CHANGED: loss по ВСЕМ позициям, ignore_index=-1 для паддинга
                 loss = F.cross_entropy(logits.view(B * T, V), yb.view(B * T), ignore_index=-1)
 
                 optimizer.zero_grad()
                 loss.backward()
-                torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)  # NEW: клиппинг градиентов
+                nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
                 optimizer.step()
 
                 epoch_loss += loss.item()
@@ -244,7 +249,6 @@ class GPTFinal(nn.Module):
             if verbose:
                 print(f"epoch {epoch}: train_loss={train_loss:.4f}  val_loss={val_loss:.4f}")
 
-            # NEW: early stopping — сохраняем лучшее состояние, останавливаемся при застое
             if val_loss < best_val:
                 best_val = val_loss
                 best_state = {k: v.clone() for k, v in self.state_dict().items()}
@@ -256,7 +260,7 @@ class GPTFinal(nn.Module):
                         print(f"early stopping на эпохе {epoch} (лучший val={best_val:.4f})")
                     break
 
-        if best_state is not None:            # NEW: восстанавливаем лучшие веса
+        if best_state is not None:
             self.load_state_dict(best_state)
 
         return self.train_losses, self.val_losses
@@ -266,28 +270,26 @@ class GPTFinal(nn.Module):
         self.eval()
         logits = self.forward(X)
         B, T, V = logits.shape
-        # CHANGED: loss по всем позициям с ignore_index=-1
         loss = F.cross_entropy(logits.view(B * T, V), Y.view(B * T), ignore_index=-1)
         return loss.item()
 
     def test_loss(self) -> float:
         return self.evaluate(self.X_test, self.Y_test)
 
-    # CHANGED: контекст растёт по одному токену (переменный T), обрезается до block_size
     @torch.no_grad()
     def generate(self, num: int = 10, max_len: int = 30) -> list[str]:
         self.eval()
         results = []
         for _ in range(num):
-            context = [0]  # CHANGED: старт с одного start-токена, не с block_size нулей
+            context = [0]
             out = []
-            for _ in range(max_len):                              # NEW: защита от бесконечного цикла
-                idx = torch.tensor([context[-self.block_size:]])  # CHANGED: обрезка контекста до block_size
-                logits = self.forward(idx)                        # (1, T, vocab)
-                logits_last = logits[0, -1, :]                    # (vocab,) — только последняя позиция
+            for _ in range(max_len):
+                idx = torch.tensor([context[-self.block_size:]])
+                logits = self.forward(idx)
+                logits_last = logits[0, -1, :]
                 probs = F.softmax(logits_last, dim=0)
                 ix = torch.multinomial(probs, num_samples=1, generator=self.g).item()
-                if ix == 0:                                       # конец имени
+                if ix == 0:
                     break
                 out.append(self.itos[ix])
                 context.append(ix)
