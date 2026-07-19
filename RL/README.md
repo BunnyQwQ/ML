@@ -8,7 +8,8 @@
 
 | Проект | Алгоритм | Среда | Результат |
 |--------|----------|-------|-----------|
-| _раздел в разработке — проекты скоро появятся_ | | | |
+| [frozen_lake](frozen_lake/) | Табличный Q-learning (ε-greedy, TD) | `FrozenLake-v1` | success rate **0.72** (стохастич.) |
+| [cart_pole](cart_pole/) | REINFORCE ± baseline (policy gradient) | `CartPole-v1` | **500** с baseline (без — ~300 за 1000 эп.) |
 
 ## Структура
 
