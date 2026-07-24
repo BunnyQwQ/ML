@@ -8,6 +8,7 @@
 #include <string>
 #include <chrono>
 #include <limits>
+#include <windows.h>
 
 constexpr int WIDTH  = 7;
 constexpr int HEIGHT = 6;
@@ -23,10 +24,10 @@ struct Board {
 
 inline bool wins(uint64_t p) {
     uint64_t m;
-    m = p & (p >> 7);   if (m & (m >> 14)) return true;   // горизонталь
-    m = p & (p >> 1);   if (m & (m >> 2))  return true;   // вертикаль
-    m = p & (p >> 8);   if (m & (m >> 16)) return true;   // диагональ /
-    m = p & (p >> 6);   if (m & (m >> 12)) return true;   // диагональ \
+    m = p & (p >> 7);   if (m & (m >> 14)) return true;
+    m = p & (p >> 1);   if (m & (m >> 2))  return true;
+    m = p & (p >> 8);   if (m & (m >> 16)) return true;
+    m = p & (p >> 6);   if (m & (m >> 12)) return true;
     return false;
 }
 
@@ -230,6 +231,8 @@ static int read_human_move(const Board& b) {
 }
 
 int main() {
+    SetConsoleCP(65001);
+    SetConsoleOutputCP(65001);
     std::random_device rd;
     std::mt19937 rng(rd());
 
