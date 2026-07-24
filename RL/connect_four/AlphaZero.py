@@ -440,7 +440,7 @@ def main():
     p.add_argument("--games", type=int, default=20)
     p.add_argument("--train-steps", type=int, default=200)
     p.add_argument("--batch-size", type=int, default=128)
-    p.add_argument("--buffer-size", type=int, default=50000)
+    p.add_argument("--buffer-size", type=int, default=5000)
     p.add_argument("--lr", type=float, default=1e-3)
     p.add_argument("--temp-moves", type=int, default=10)
     p.add_argument("--resume", action="store_true")
