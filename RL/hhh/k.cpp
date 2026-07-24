@@ -43,7 +43,7 @@ inline bool can_play(const Board& b, int col) {
 
 inline void play(Board& b, int col) {
     uint8_t ind = col * H1 + b.heights[col];
-    b.pos[b.player] |= 1 << ind;
+    b.pos[b.player] |= 1ULL << ind;
     b.heights[col]++;
     b.moves++;
     b.player ^= 1;
@@ -135,13 +135,11 @@ static int search(const Board& root_board, int iterations, std::mt19937& rng, do
         Board b = root_board;
         int node = 0;
 
-        // 1. SELECTION — спуск, пока узел полностью развёрнут и не терминален
         while (pool[node].untried.empty() && !is_terminal(b)) {
             node = select_child(pool, node, c_puct);
             play(b, pool[node].move);
         }
 
-        // 2. EXPANSION — добавляем ОДИН новый узел
         if (!pool[node].untried.empty()) {
             auto& untried = pool[node].untried;
             std::uniform_int_distribution<int> pick(0, static_cast<int>(untried.size()) - 1);
@@ -156,14 +154,11 @@ static int search(const Board& root_board, int iterations, std::mt19937& rng, do
             node = child;
         }
 
-        // 3. SIMULATION
         double value = simulate(b, rng);
 
-        // 4. BACKUP
         backup(pool, node, value);
     }
 
-    // Финальный ход — самый ПОСЕЩАЕМЫЙ корневой ребёнок (не с лучшим Q).
     int best_col = -1, best_n = -1;
     for (int col = 0; col < WIDTH; ++col) {
         int ch = pool[0].children[col];
@@ -180,9 +175,9 @@ static void print_board(const Board& b) {
     for (int row = HEIGHT - 1; row >= 0; --row) {
         for (int col = 0; col < WIDTH; ++col) {
             uint64_t bit = 1ULL << (col * H1 + row);
-            if      (b.pos[0] & bit) std::cout << " X";
+            if (b.pos[0] & bit) std::cout << " X";
             else if (b.pos[1] & bit) std::cout << " O";
-            else                     std::cout << " .";
+            else std::cout << " .";
         }
         std::cout << '\n';
     }
