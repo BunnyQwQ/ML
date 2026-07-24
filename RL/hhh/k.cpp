@@ -99,29 +99,14 @@ static int select_child(const std::vector<Node>& pool, int node, double c_puct) 
     return best_idx;
 }
 
-// ---------------------------------------------------------------------------
-// ЗАДАНИЕ 4: случайная доигровка
-//
-// Возвращает результат С ТОЧКИ ЗРЕНИЯ ИГРОКА, КОТОРЫЙ ХОДИТ В b НА ВХОДЕ:
-//   +1 победа, -1 поражение, 0 ничья.
-//
-// Цикл:
-//   1) если предыдущий игрок (1 - b.player) собрал четвёрку -> партия окончена
-//      (тогда тот, чья очередь ходить, ПРОИГРАЛ)
-//   2) если b.moves == CELLS -> ничья
-//   3) иначе выбрать случайный легальный столбец и сыграть
-//
-// Board передаётся ПО ЗНАЧЕНИЮ — портить дерево нельзя.
-// ---------------------------------------------------------------------------
 static double simulate(Board b, std::mt19937& rng) {
-    int me = b.player;   // от чьего лица считаем результат
+    int me = b.player;
 
     while (true) {
-        // предыдущий игрок собрал четвёрку -> тот, чья очередь, проиграл
         if (wins(b.pos[1 - b.player]))
-            return ((1 - b.player) == me) ? 1.0 : -1.0;
+            return ((1 - b.player) == me) ? 1. : -1.;
 
-        if (b.moves == CELLS) return 0.0;
+        if (b.moves == CELLS) return 0.;
 
         int legal[WIDTH], n = 0;
         for (int c = 0; c < WIDTH; ++c)
@@ -191,9 +176,6 @@ static int search(const Board& root_board, int iterations, std::mt19937& rng, do
     return best_col;
 }
 
-// ---------------------------------------------------------------------------
-// ВСПОМОГАТЕЛЬНОЕ: печать доски
-// ---------------------------------------------------------------------------
 static void print_board(const Board& b) {
     for (int row = HEIGHT - 1; row >= 0; --row) {
         for (int col = 0; col < WIDTH; ++col) {
@@ -215,15 +197,15 @@ int main() {
 
     while (!is_terminal(b)) {
         int col = search(b, ITERS, rng);
-        std::cout << "игрок " << b.player << " -> столбец " << col << "\n";
+        std::cout << "player " << b.player << " -> col " << col << "\n";
         play(b, col);
         print_board(b);
         std::cout << '\n';
     }
 
-    if (wins(b.pos[0]))      std::cout << "победил X\n";
-    else if (wins(b.pos[1])) std::cout << "победил O\n";
-    else                     std::cout << "ничья\n";
+    if (wins(b.pos[0]))      std::cout << "win X\n";
+    else if (wins(b.pos[1])) std::cout << "win O\n";
+    else                     std::cout << "draw\n";
 
     return 0;
 }
