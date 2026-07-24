@@ -117,7 +117,18 @@ static double simulate(Board b, std::mt19937& rng) {
     int me = b.player;   // от чьего лица считаем результат
 
     while (true) {
-        if
+        // предыдущий игрок собрал четвёрку -> тот, чья очередь, проиграл
+        if (wins(b.pos[1 - b.player]))
+            return ((1 - b.player) == me) ? 1.0 : -1.0;
+
+        if (b.moves == CELLS) return 0.0;
+
+        int legal[WIDTH], n = 0;
+        for (int c = 0; c < WIDTH; ++c)
+            if (can_play(b, c)) legal[n++] = c;
+
+        std::uniform_int_distribution<int> pick(0, n - 1);
+        play(b, legal[pick(rng)]);
     }
 }
 
