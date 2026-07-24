@@ -43,7 +43,7 @@ inline bool can_play(const Board& b, int col) {
 
 inline void play(Board& b, int col) {
     uint8_t ind = col * H1 + b.heights[col];
-    b.pos[b.player] |= ind >> 1;
+    b.pos[b.player] |= 1 << ind;
     b.heights[col]++;
     b.moves++;
     b.player ^= 1;
@@ -89,7 +89,7 @@ static int select_child(const std::vector<Node>& pool, int node, double c_puct) 
 
         double q = pool[ch].W / pool[ch].N;
 
-        double score = -q + c_puct * sqrt(log_np - std::log(static_cast<double>(pool[ch].N)));
+        double score = -q + c_puct * sqrt(log_np / pool[ch].N);
 
         if (score > best_score) {
             best_score = score;
@@ -130,8 +130,7 @@ static void backup(std::vector<Node>& pool, int node, double value) {
     }
 }
 
-static int search(const Board& root_board, int iterations, std::mt19937& rng,
-                  double c_puct = 1.41) {
+static int search(const Board& root_board, int iterations, std::mt19937& rng, double c_puct = 1.41) {
     std::vector<Node> pool;
     pool.reserve(iterations + 1);
     make_node(pool, -1, -1, root_board);
