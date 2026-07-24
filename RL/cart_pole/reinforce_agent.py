@@ -35,7 +35,7 @@ class ValueNet(nn.Module):
         return self.net(x).squeeze(-1)
 
 
-class CartPoleAgent:
+class ReinforceAgent:
     def __init__(
         self,
         env_name: str = 'CartPole-v1',
@@ -199,7 +199,7 @@ class CartPoleAgent:
 
 
 if __name__ == '__main__':
-    agent = CartPoleAgent(use_baseline=True)
+    agent = ReinforceAgent(baseline=True)
     agent.watch()
     agent.train(episodes=1000)
     agent.watch()

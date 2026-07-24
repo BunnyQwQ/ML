@@ -9,7 +9,7 @@
 | Проект | Алгоритм | Среда | Результат |
 |--------|----------|-------|-----------|
 | [frozen_lake](frozen_lake/) | Табличный Q-learning (ε-greedy, TD) | `FrozenLake-v1` | success rate **0.72** (стохастич.) |
-| [cart_pole](cart_pole/) | REINFORCE ± baseline (policy gradient) | `CartPole-v1` | **500** с baseline (без — ~300 за 1000 эп.) |
+| [cart_pole](cart_pole/) | REINFORCE (± baseline) и PPO (GAE, clipping) | `CartPole-v1` | PPO и REINFORCE+baseline → **500**; REINFORCE без baseline → ~300 |
 
 ## Структура
 
