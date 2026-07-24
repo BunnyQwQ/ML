@@ -1,6 +1,3 @@
-// Connect Four: MCTS на битбордах + игра против человека.
-// Собрать:  g++ -O2 -std=c++17 mcts_connect4.cpp -o mcts
-
 #include <cstdint>
 #include <vector>
 #include <array>
@@ -118,11 +115,10 @@ static void backup(std::vector<Node>& pool, int node, double value) {
     }
 }
 
-// Результат поиска: лучший ход + статистика по каждому столбцу.
 struct SearchResult {
     int best_col = -1;
     std::array<int, WIDTH>    visits{};
-    std::array<double, WIDTH> winrate{};   // с точки зрения ТОГО, КТО ХОДИТ
+    std::array<double, WIDTH> winrate{};
 };
 
 static SearchResult search(const Board& root_board, int iterations,
@@ -135,13 +131,11 @@ static SearchResult search(const Board& root_board, int iterations,
         Board b = root_board;
         int node = 0;
 
-        // 1. SELECTION
         while (pool[node].untried.empty() && !is_terminal(b)) {
             node = select_child(pool, node, c_puct);
             play(b, pool[node].move);
         }
 
-        // 2. EXPANSION
         if (!pool[node].untried.empty()) {
             auto& untried = pool[node].untried;
             std::uniform_int_distribution<int> pick(0, static_cast<int>(untried.size()) - 1);
@@ -156,10 +150,8 @@ static SearchResult search(const Board& root_board, int iterations,
             node = child;
         }
 
-        // 3. SIMULATION
         double value = simulate(b, rng);
 
-        // 4. BACKUP
         backup(pool, node, value);
     }
 
@@ -170,7 +162,6 @@ static SearchResult search(const Board& root_board, int iterations,
         if (ch == -1) continue;
 
         res.visits[col]  = pool[ch].N;
-        // Q ребёнка — от лица соперника, поэтому минус
         res.winrate[col] = -pool[ch].W / pool[ch].N;
 
         if (pool[ch].N > best_n) {
@@ -181,17 +172,13 @@ static SearchResult search(const Board& root_board, int iterations,
     return res;
 }
 
-// ---------------------------------------------------------------------------
-// ИНТЕРФЕЙС
-// ---------------------------------------------------------------------------
-
 static void print_board(const Board& b) {
     std::cout << '\n';
     for (int row = HEIGHT - 1; row >= 0; --row) {
         std::cout << " |";
         for (int col = 0; col < WIDTH; ++col) {
             uint64_t bit = 1ULL << (col * H1 + row);
-            if      (b.pos[0] & bit) std::cout << " X";
+            if (b.pos[0] & bit)      std::cout << " X";
             else if (b.pos[1] & bit) std::cout << " O";
             else                     std::cout << " .";
         }
@@ -249,7 +236,6 @@ int main() {
     std::cout << "Connect Four против MCTS\n"
                  "X ходит первым, O вторым.\n\n";
 
-    // выбор стороны
     int human = 0;
     while (true) {
         std::cout << "играть за X (первым) или O (вторым)? [x/o]: ";
@@ -259,7 +245,6 @@ int main() {
         if (s == "o" || s == "O") { human = 1; break; }
     }
 
-    // число симуляций = сила MCTS
     int iterations = 20000;
     std::cout << "сила MCTS (число симуляций, Enter = 20000): ";
     {
